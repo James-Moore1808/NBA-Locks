@@ -1,0 +1,119 @@
+import pandas as pd
+import requests
+from datetime import date
+#READING IN API KEY
+key = open('Spreads_API_Key.txt','r')
+key = key.read()
+#API PARAMETERS
+api_key = key
+regions = "us"
+markets = "h2h,spreads,totals"
+date_code = "iso"
+odds_format = "american"
+bookmaker = 'fanduel'
+date_dummy = date.today()
+iso_date = date_dummy.isoformat()
+
+#REQUESTING NCAA DATA FROM API
+ncaa_response = requests.get(
+    f'https://api.the-odds-api.com/v4/sports/basketball_ncaab/odds', 
+    params={
+        'api_key': api_key,
+        'regions': regions,
+        'markets': markets,
+        'oddsFormat': odds_format,
+        'dateFormat': date_code,
+        'bookmakers': bookmaker,
+        'commenceTimeFrom': f"{iso_date}T00:00:00Z",
+        'commenceTimeTo': f"{iso_date}T23:59:59Z"
+
+    }
+)
+
+#REQUESTING NBA DATA FROM API
+nba_response = requests.get(
+    'https://api.the-odds-api.com/v4/sports/basketball_nba/odds', 
+    params={
+        'api_key': api_key,
+        'regions': regions,
+        'markets': markets,
+        'oddsFormat': odds_format,
+        'dateFormat': date_code,
+        'bookmakers': bookmaker,
+        'commenceTimeFrom': f"{iso_date}T00:00:00Z",
+        'commenceTimeTo': f"{iso_date}T23:59:59Z"
+
+    }
+)
+
+
+#GETTING NBA DATA FROM JSON INTO A DATAFRAME
+nba_events = nba_response.json()
+nba_today = pd.DataFrame(nba_events)
+nba_today_clean = nba_today[nba_today['bookmakers']!= ""]
+#GETTING NCAA DATA FROM JSON INTO A DATAFRAME
+ncaa_events = ncaa_response.json()
+ncaa_today = pd.DataFrame(ncaa_events)
+print(ncaa_today)
+ncaa_today_clean = ncaa_today[ncaa_today['bookmakers']!= ""]
+
+#INITIALIZING THE COUNTER AND THE THREE DATAFRAMES THAT WILL HOLD THE DATA
+i = 0
+nba_h2h_df = pd.DataFrame()
+nba_spreads_df = pd.DataFrame()
+nba_totals_df = pd.DataFrame()
+for i in range(len(nba_today_clean)):
+    #GETTING A SINGLE GAMES DATA
+    nba_game = nba_today_clean['bookmakers'][i]
+    nba_game_id = nba_today_clean['id'][i]
+    #PARSING THE LISTS INTO DIFFERENT VARIABLES
+    nba_h2h_data = nba_game[0]['markets'][0]['outcomes']
+    nba_spreads_data = nba_game[0]['markets'][1]['outcomes']
+    nba_totals_data = nba_game[0]['markets'][2]['outcomes']
+    #MAKING THE H2H DF
+    dummy_h2h_df = pd.DataFrame(nba_h2h_data)
+    dummy_h2h_df.rename(columns={'name': 'Team', 'price': 'Odds'}, inplace=True)
+    dummy_h2h_df.insert(0, "Game_ID", nba_game_id)
+    nba_h2h_df = pd.concat([nba_h2h_df,dummy_h2h_df], ignore_index=True)
+    #MAKING THE SPREADS DF
+    dummy_spreads_df = pd.DataFrame(nba_spreads_data)
+    dummy_spreads_df.rename(columns={'name': 'Team', 'price': 'Odds', 'point': 'Spread'}, inplace=True)
+    dummy_spreads_df.insert(0, "Game_ID", nba_game_id)
+    nba_spreads_df = pd.concat([nba_spreads_df,dummy_spreads_df], ignore_index=True)
+    #MAKING THE TOTALS DF
+    dummy_totals_df = pd.DataFrame(nba_totals_data)
+    dummy_totals_df.rename(columns={'name': 'Side', 'price': 'Odds', 'point': 'Total'}, inplace=True)
+    dummy_totals_df.insert(0, "Game_ID", nba_game_id)
+    nba_totals_df = pd.concat([nba_totals_df,dummy_totals_df], ignore_index=True)
+#DROPPING SPORTSBOOK INFO
+nba_today_clean.drop(columns=['bookmakers'])
+#INITIALIZING THE COUNTER AND THE THREE DATAFRAMES THAT WILL HOLD THE DATA
+i = 0
+ncaa_h2h_df = pd.DataFrame()
+ncaa_spreads_df = pd.DataFrame()
+ncaa_totals_df = pd.DataFrame()
+for i in range(len(ncaa_today_clean)):
+    #GETTING A SINGLE GAMES DATA
+    ncaa_game = ncaa_today_clean['bookmakers'][i]
+    ncaa_game_id = ncaa_today_clean['id'][i]
+    #PARSING THE LISTS INTO DIFFERENT VARIABLES
+    ncaa_h2h_data = ncaa_game[0]['markets'][0]['outcomes']
+    ncaa_spreads_data = ncaa_game[0]['markets'][1]['outcomes']
+    ncaa_totals_data = ncaa_game[0]['markets'][2]['outcomes']
+    #MAKING THE H2H DF
+    dummy_h2h_df = pd.DataFrame(ncaa_h2h_data)
+    dummy_h2h_df.rename(columns={'name': 'Team', 'price': 'Odds'}, inplace=True)
+    dummy_h2h_df.insert(0, "Game_ID", ncaa_game_id)
+    ncaa_h2h_df = pd.concat([ncaa_h2h_df,dummy_h2h_df], ignore_index=True)
+    #MAKING THE SPREADS DF
+    dummy_spreads_df = pd.DataFrame(ncaa_spreads_data)
+    dummy_spreads_df.rename(columns={'name': 'Team', 'price': 'Odds', 'point': 'Spread'}, inplace=True)
+    dummy_spreads_df.insert(0, "Game_ID", ncaa_game_id)
+    ncaa_spreads_df = pd.concat([ncaa_spreads_df,dummy_spreads_df], ignore_index=True)
+    #MAKING THE TOTALS DF
+    dummy_totals_df = pd.DataFrame(ncaa_totals_data)
+    dummy_totals_df.rename(columns={'name': 'Side', 'price': 'Odds', 'point': 'Total'}, inplace=True)
+    dummy_totals_df.insert(0, "Game_ID", ncaa_game_id)
+    ncaa_totals_df = pd.concat([ncaa_totals_df,dummy_totals_df], ignore_index=True)
+#DROPPING SPORTSBOOK DATA
+ncaa_today_clean.drop(columns=['bookmakers'])
