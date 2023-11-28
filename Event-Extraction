@@ -85,8 +85,8 @@ for i in range(len(nba_today_clean)):
     dummy_totals_df.rename(columns={'name': 'Side', 'price': 'Odds', 'point': 'Total'}, inplace=True)
     dummy_totals_df.insert(0, "Game_ID", nba_game_id)
     nba_totals_df = pd.concat([nba_totals_df,dummy_totals_df], ignore_index=True)
-#DROPPING SPORTSBOOK INFO
-nba_today_clean.drop(columns=['bookmakers'])
+#DROPPING SPORTSBOOK INFO AND SPORT KEY
+nba_today_clean.drop(columns=['bookmakers', 'sport_key'])
 #INITIALIZING THE COUNTER AND THE THREE DATAFRAMES THAT WILL HOLD THE DATA
 i = 0
 ncaa_h2h_df = pd.DataFrame()
@@ -115,5 +115,5 @@ for i in range(len(ncaa_today_clean)):
     dummy_totals_df.rename(columns={'name': 'Side', 'price': 'Odds', 'point': 'Total'}, inplace=True)
     dummy_totals_df.insert(0, "Game_ID", ncaa_game_id)
     ncaa_totals_df = pd.concat([ncaa_totals_df,dummy_totals_df], ignore_index=True)
-#DROPPING SPORTSBOOK DATA
-ncaa_today_clean.drop(columns=['bookmakers'])
+#DROPPING SPORTSBOOK DATA AND SPORT KEY
+ncaa_today_clean.drop(columns=['bookmakers','sport_key'])
